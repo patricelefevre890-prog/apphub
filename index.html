@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AppHub — Mes applications</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f3;
+      --bg-tertiary: #eeece6;
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b67;
+      --text-tertiary: #9e9e9a;
+      --border-light: rgba(0,0,0,0.10);
+      --border-med: rgba(0,0,0,0.18);
+      --accent: #534AB7;
+      --accent-dark: #3C3489;
+      --accent-light: #EEEDFE;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1c;
+        --bg-secondary: #2a2a28;
+        --bg-tertiary: #141412;
+        --text-primary: #f0ede6;
+        --text-secondary: #9e9e9a;
+        --text-tertiary: #6b6b67;
+        --border-light: rgba(255,255,255,0.08);
+        --border-med: rgba(255,255,255,0.15);
+        --accent-light: #1e1a4a;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: var(--bg-primary);
+      border-bottom: 0.5px solid var(--border-light);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-right input {
+      font-size: 13px;
+      padding: 7px 10px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-med);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      width: 200px;
+    }
+
+    .topbar-right input:focus { outline: none; border-color: var(--accent); }
+
+    .btn-add {
+      background: var(--accent);
+      color: var(--accent-light);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-add:hover { background: var(--accent-dark); }
+
+    .main { padding: 16px 20px; max-width: 1200px; margin: 0 auto; }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+    .stat-val { font-size: 24px; font-weight: 500; color: var(--text-primary); }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .chip {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 0.5px solid var(--border-med);
+      color: var(--text-secondary);
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.12s;
+    }
+
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    .chip.active {
+      background: var(--accent-light);
+      border-color: #AFA9EC;
+      color: var(--accent-dark);
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .app-card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      position: relative;
+      transition: border-color 0.15s;
+    }
+
+    .app-card:hover { border-color: var(--border-med); }
+    .app-card.archived { opacity: 0.55; }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .app-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .card-menu {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      font-size: 20px;
+      line-height: 1;
+      padding: 0 2px;
+      position: relative;
+    }
+
+    .app-name { font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+    .app-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.5; }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .platform-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.live { background: #1D9E75; }
+    .status-dot.dev { background: #EF9F27; }
+    .status-dot.archived { background: #B4B2A9; }
+    .status-text { font-size: 11px; color: var(--text-secondary); }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 0.5px solid var(--border-light);
+    }
+
+    .card-stats { display: flex; gap: 14px; }
+    .cstat { font-size: 11px; color: var(--text-secondary); }
+    .cstat span { font-weight: 500; color: var(--text-primary); }
+
+    .btn-open {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-med);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.12s;
+    }
+
+    .btn-open:hover { background: var(--bg-secondary); }
+
+    .ctx-menu {
+      display: none;
+      position: absolute;
+      top: 32px;
+      right: 0;
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      z-index: 30;
+      min-width: 140px;
+      overflow: hidden;
+    }
+
+    .ctx-menu.open { display: block; }
+
+    .ctx-item {
+      padding: 9px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-primary);
+      border-bottom: 0.5px solid var(--border-light);
+    }
+
+    .ctx-item:last-child { border-bottom: none; }
+    .ctx-item:hover { background: var(--bg-secondary); }
+    .ctx-item.danger { color: #A32D2D; }
+
+    .empty {
+      grid-column: 1/-1;
+      padding: 48px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border-med);
+      padding: 22px;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .modal-title { font-size: 15px; font-weight: 500; margin-bottom: 16px; color: var(--text-primary); }
+
+    .field { margin-bottom: 12px; }
+    .field label { font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+
+    .field input, .field select, .field textarea {
+      width: 100%;
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-med);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .field textarea { resize: vertical; min-height: 70px; }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .btn-cancel {
+      background: none;
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      padding: 7px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .btn-save {
+      background: var(--accent);
+      color: var(--accent-light);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-save:hover { background: var(--accent-dark); }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="logo"><span class="logo-dot"></span> AppHub</div>
+    <div class="topbar-right">
+      <input type="text" id="search" placeholder="Rechercher une app..." oninput="renderApps()" />
+      <button class="btn-add" onclick="openModal()">+ Ajouter</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats-row" id="stats-row"></div>
+
+    <div class="section-head">
+      <span class="section-title">Mes applications</span>
+      <div class="filters">
+        <button class="chip active" onclick="setFilter(this,'all')">Toutes</button>
+        <button class="chip" onclick="setFilter(this,'live')">Live</button>
+        <button class="chip" onclick="setFilter(this,'dev')">En dev</button>
+        <button class="chip" onclick="setFilter(this,'archived')">Archivées</button>
+      </div>
+    </div>
+
+    <div class="apps-grid" id="apps-grid"></div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <div class="modal-title" id="modal-title">Nouvelle application</div>
+      <div class="field"><label>Nom</label><input type="text" id="f-name" placeholder="Mon App" /></div>
+      <div class="field"><label>Description</label><textarea id="f-desc" placeholder="À quoi ça sert..."></textarea></div>
+      <div class="field"><label>URL</label><input type="text" id="f-url" placeholder="https://..." /></div>
+      <div class="field"><label>Plateforme</label>
+        <select id="f-platform">
+          <option value="Netlify">Netlify</option>
+          <option value="GitHub Pages">GitHub Pages</option>
+          <option value="Vercel">Vercel</option>
+          <option value="Local">Local</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <div class="field"><label>Statut</label>
+        <select id="f-status">
+          <option value="live">Live</option>
+          <option value="dev">En développement</option>
+          <option value="archived">Archivée</option>
+        </select>
+      </div>
+      <div class="field"><label>Icône (emoji)</label><input type="text" id="f-icon" placeholder="🚀" maxlength="2" /></div>
+      <input type="hidden" id="f-id" />
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+        <button class="btn-save" onclick="saveApp()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BG_COLORS = ['#EEEDFE','#E1F5EE','#FAECE7','#E6F1FB','#FAEEDA','#FBEAF0','#EAF3DE'];
+    const FG_COLORS = ['#534AB7','#0F6E56','#993C1D','#185FA5','#854F0B','#993556','#3B6D11'];
+
+    let apps = [];
+    let activeFilter = 'all';
+    let editId = null;
+
+    function load() {
+      try {
+        const d = localStorage.getItem('apphub_v1');
+        apps = d ? JSON.parse(d) : [];
+      } catch(e) { apps = []; }
+
+      if (!apps.length) {
+        apps = [{
+          id: 1,
+          name: 'SoundProspect',
+          desc: 'Analyse de marché géolocalisée pour la diffusion musicale',
+          url: 'https://exquisite-scone-27240e.netlify.app',
+          platform: 'GitHub Pages',
+          status: 'live',
+          icon: '🎵',
+          visits: 42,
+          created: Date.now() - 86400000 * 2
+        }];
+        persist();
+      }
+    }
+
+    function persist() {
+      try { localStorage.setItem('apphub_v1', JSON.stringify(apps)); } catch(e) {}
+    }
+
+    function setFilter(btn, f) {
+      activeFilter = f;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      renderApps();
+    }
+
+    function renderStats() {
+      const total = apps.length;
+      const live = apps.filter(a => a.status === 'live').length;
+      const dev = apps.filter(a => a.status === 'dev').length;
+      const visits = apps.reduce((s, a) => s + (a.visits || 0), 0);
+      document.getElementById('stats-row').innerHTML = `
+        <div class="stat-card"><div class="stat-label">Total apps</div><div class="stat-val">${total}</div></div>
+        <div class="stat-card"><div class="stat-label">Live</div><div class="stat-val">${live}</div></div>
+        <div class="stat-card"><div class="stat-label">En développement</div><div class="stat-val">${dev}</div></div>
+        <div class="stat-card"><div class="stat-label">Visites totales</div><div class="stat-val">${visits.toLocaleString()}</div></div>
+      `;
+    }
+
+    function renderApps() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const filtered = apps.filter(a => {
+        if (activeFilter !== 'all' && a.status !== activeFilter) return false;
+        if (q && !a.name.toLowerCase().includes(q) && !(a.desc||'').toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      const grid = document.getElementById('apps-grid');
+      if (!filtered.length) {
+        grid.innerHTML = '<div class="empty">Aucune application trouvée</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(a => {
+        const ci = a.id % BG_COLORS.length;
+        const age = Math.floor((Date.now() - a.created) / 86400000);
+        const ageStr = age === 0 ? "aujourd'hui" : age === 1 ? 'hier' : `il y a ${age}j`;
+        const statusLabel = { live: 'Live', dev: 'En dev', archived: 'Archivée' }[a.status] || a.status;
+        return `
+          <div class="app-card${a.status === 'archived' ? ' archived' : ''}">
+            <div class="card-top">
+              <div class="app-icon" style="background:${BG_COLORS[ci]};color:${FG_COLORS[ci]}">${a.icon || '📦'}</div>
+              <div style="position:relative">
+                <button class="card-menu" onclick="toggleCtx(event,${a.id})">⋯</button>
+                <div class="ctx-menu" id="ctx-${a.id}">
+                  <div class="ctx-item" onclick="editApp(${a.id})">Modifier</div>
+                  <div class="ctx-item" onclick="toggleArchive(${a.id})">${a.status === 'archived' ? 'Désarchiver' : 'Archiver'}</div>
+                  <div class="ctx-item danger" onclick="deleteApp(${a.id})">Supprimer</div>
+                </div>
+              </div>
+            </div>
+            <div class="app-name">${a.name}</div>
+            <div class="app-desc">${a.desc || ''}</div>
+            <div class="card-meta">
+              <span class="platform-badge">${a.platform}</span>
+              <span class="status-dot ${a.status}"></span>
+              <span class="status-text">${statusLabel}</span>
+            </div>
+            <div class="card-footer">
+              <div class="card-stats">
+                <div class="cstat"><span>${(a.visits || 0).toLocaleString()}</span> visites</div>
+                <div class="cstat">${ageStr}</div>
+              </div>
+              ${a.url ? `<a class="btn-open" href="${a.url}" target="_blank">Ouvrir →</a>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleCtx(e, id) {
+      e.stopPropagation();
+      document.querySelectorAll('.ctx-menu').forEach(m => {
+        if (m.id !== 'ctx-' + id) m.classList.remove('open');
+      });
+      document.getElementById('ctx-' + id).classList.toggle('open');
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.ctx-menu').forEach(m => m.classList.remove('open'));
+    });
+
+    function openModal(app) {
+      editId = app ? app.id : null;
+      document.getElementById('modal-title').textContent = app ? "Modifier l'application" : 'Nouvelle application';
+      document.getElementById('f-name').value = app?.name || '';
+      document.getElementById('f-desc').value = app?.desc || '';
+      document.getElementById('f-url').value = app?.url || '';
+      document.getElementById('f-platform').value = app?.platform || 'Netlify';
+      document.getElementById('f-status').value = app?.status || 'live';
+      document.getElementById('f-icon').value = app?.icon || '';
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+      editId = null;
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('modal-overlay')) closeModal();
+    }
+
+    function saveApp() {
+      const name = document.getElementById('f-name').value.trim();
+      if (!name) return;
+      if (editId) {
+        const a = apps.find(x => x.id === editId);
+        if (a) {
+          a.name = name;
+          a.desc = document.getElementById('f-desc').value.trim();
+          a.url = document.getElementById('f-url').value.trim();
+          a.platform = document.getElementById('f-platform').value;
+          a.status = document.getElementById('f-status').value;
+          a.icon = document.getElementById('f-icon').value.trim() || '📦';
+        }
+      } else {
+        apps.unshift({
+          id: Date.now(),
+          name,
+          desc: document.getElementById('f-desc').value.trim(),
+          url: document.getElementById('f-url').value.trim(),
+          platform: document.getElementById('f-platform').value,
+          status: document.getElementById('f-status').value,
+          icon: document.getElementById('f-icon').value.trim() || '📦',
+          visits: 0,
+          created: Date.now()
+        });
+      }
+      persist();
+      closeModal();
+      renderStats();
+      renderApps();
+    }
+
+    function editApp(id) { openModal(apps.find(a => a.id === id)); }
+
+    function toggleArchive(id) {
+      const a = apps.find(x => x.id === id);
+      if (a) {
+        a.status = a.status === 'archived' ? 'live' : 'archived';
+        persist(); renderStats(); renderApps();
+      }
+    }
+
+    function deleteApp(id) {
+      if (!confirm('Supprimer cette application ?')) return;
+      apps = apps.filter(a => a.id !== id);
+      persist(); renderStats(); renderApps();
+    }
+
+    load();
+    renderStats();
+    renderApps();
+  </script>
+</body>
+</html>
